@@ -2,11 +2,10 @@ export const BOARD_SIZE = 3
 
 export class GameData {
   constructor () {
-    this.platformSize = 150
-    this.spaceSize = 10
     this.x = new Player()
     this.o = new Player()
-    this.count = 0
+    this.platformSize = 150
+    this.spaceSize = 10
     this._winner = null
     this._endGame = false
     this._randomI = null
@@ -18,7 +17,8 @@ export class GameData {
   }
 
   get letter () {
-    return this.count % 2 ? 'o' : 'x'
+    const count = this.getCountAll()
+    return count % 2 ? 'o' : 'x'
   }
 
   get winner () {
@@ -31,8 +31,8 @@ export class GameData {
 
   getCount (letter) {
     let count = 0
-    for (let key in this[letter].rows) {
-      count += this[letter].rows[key].length
+    for (let key in this[letter].data.rows) {
+      count += this[letter].data.rows[key].length
     }
     return count
   }
@@ -41,23 +41,51 @@ export class GameData {
     return this.getCount('x') + this.getCount('o')
   }
 
-  updatePlayerData (i, j) {
-    this[this.letter].updateData(i, j)
-    if (this[this.letter].maxLength === BOARD_SIZE) {
-      this._winner = this.letter
+  updatePlayerData (i, j, letter) {
+    this[letter].updateData(i, j)
+    if (this[letter].maxLength === BOARD_SIZE) {
+      this._winner = letter
     } else if (this.count === BOARD_SIZE ** 2 - 1) {
       this._endGame = true
-    } else {
-      this.count++
     }
   }
 
-  // autoSetLetter () {
-  //   this._randomI = 0
-  //   this._randomJ = 2
-  //   this.o.updateData(this._randomI, this._randomJ)
-  //   this.count++
-  // }
+  autoSetLetter () {
+    const matrix = this.getMatrix()
+    let i, j
+    do {
+      i = Math.floor(Math.random() * BOARD_SIZE)
+      j = Math.floor(Math.random() * BOARD_SIZE)
+    } while (matrix[i][j] !== null)
+
+    this._randomI = i
+    this._randomJ = j
+    this.o.updateData(this._randomI, this._randomJ)
+  }
+
+  getMatrix () {
+    const matrix = []
+    const array = new Array(BOARD_SIZE).fill(null)
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      matrix.push([...array])
+    }
+
+    this.setMatrixLetter(matrix, 'o')
+    this.setMatrixLetter(matrix, 'x')
+
+    return matrix
+  }
+
+  setMatrixLetter (matrix, letter) {
+    for (let i in this[letter].data.rows) {
+      const arrayJ = this[letter].data.rows[i]
+      if (arrayJ.length) {
+        for (let j = 0; j < arrayJ.length; j++) {
+          matrix[i][arrayJ[j]] = letter
+        }
+      }
+    }
+  }
 }
 
 class Player {
@@ -76,20 +104,20 @@ class Player {
   }
 
   updateData (i, j) {
-    this._data.rows[i].push(j)
-    this._data.columns[j].push(i)
+    this.data.rows[i].push(j)
+    this.data.columns[j].push(i)
     if (i === j) {
-      this._data.mainDiaganal.push(i)
+      this.data.mainDiaganal.push(i)
     }
     if (i + j === BOARD_SIZE - 1) {
-      this._data.secondaryDiaganal.push(i)
+      this.data.secondaryDiaganal.push(i)
     }
 
     this.maxLength = Math.max(
-      this._data.rows[i].length,
-      this._data.columns[j].length,
-      this._data.mainDiaganal.length,
-      this._data.secondaryDiaganal.length,
+      this.data.rows[i].length,
+      this.data.columns[j].length,
+      this.data.mainDiaganal.length,
+      this.data.secondaryDiaganal.length,
     )
   }
 

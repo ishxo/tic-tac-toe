@@ -6,6 +6,7 @@ import { BOARD_SIZE, GameData } from '../data/Data'
 export default class GameScene extends Phaser.Scene {
   constructor () {
     super(SCENE_GAME)
+    this.tileContainersData = []
     this.gameModel = new GameData()
   }
 
@@ -23,11 +24,13 @@ export default class GameScene extends Phaser.Scene {
       platformSize / 2
     const boardContainer = this.add.container(boardContainerX, boardContainerY)
     for (let i = 0; i < BOARD_SIZE; i++) {
+      this.tileContainersData.push([])
       for (let j = 0; j < BOARD_SIZE; j++) {
         const tileContainer = this.add.container(
           i * (platformSize + spaceSize),
           j * (platformSize + spaceSize),
         )
+        this.tileContainersData[i].push(tileContainer)
         const tile = this.add.image(0, 0, 'platform')
         tileContainer.setInteractive(
           new Phaser.Geom.Rectangle(
@@ -51,11 +54,10 @@ export default class GameScene extends Phaser.Scene {
   }
 
   handleClick (pointer, target) {
-    const letterImage = this.add.image(0, 0, this.gameModel.letter)
-    target.removeInteractive()
-    target.add(letterImage)
+    const letter = this.gameModel.letter
+    this.drawLetter(target, letter)
     const [i, j] = target.getData(['i', 'j'])
-    this.gameModel.updatePlayerData(j, i)
+    this.gameModel.updatePlayerData(j, i, letter)
 
     if (this.gameModel.winner) {
       const winnerText = this.add.text(
@@ -70,12 +72,19 @@ export default class GameScene extends Phaser.Scene {
       noWinnerText.setX((gameConfig.width - noWinnerText.width) / 2)
     }
 
-    // this.autoBot()
+    this.autoBot()
   }
 
-  // autoBot () {
-  //   this.gameModel.autoSetLetter()
-  //   const { i, j } = this.gameModel.randomValues
-  //   console.log(i, j)
-  // }
+  drawLetter (target, letter) {
+    const letterImage = this.add.image(0, 0, letter)
+    target.removeInteractive()
+    target.add(letterImage)
+  }
+
+  autoBot () {
+    this.gameModel.autoSetLetter()
+    const { i, j } = this.gameModel.randomValues
+    const container = this.tileContainersData[j][i]
+    this.drawLetter(container, 'o')
+  }
 }
